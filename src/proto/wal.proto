@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package wal;
+
+message ValueType {
+    bytes content = 1;
+    uint64 sender = 2;
+    uint64 ts = 3;          // Lamport clock of sender when sending
+}

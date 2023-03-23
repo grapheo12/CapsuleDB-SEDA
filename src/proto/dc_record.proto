@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package dc_record;
+
+message DCRecordIndexEntry {
+    repeated uint64 hash = 1;
+    bytes key = 2;              // May replace later with some hash
+    int64 kvOffset = 3;
+    bool isDeleted = 4;         // Tombstone
+}
+
+message DCRecordIndex {
+    uint64 size = 1;
+    repeated DCRecordIndexEntry entries = 2;
+}
+
+message KVPair {
+    uint64 key_len = 1;
+    uint64 val_len = 2;
+    bytes key = 3;
+    bytes value = 4;
+}
+
+message DCMerkleTree {
+    repeated bytes hashes = 1;
+}
+
+message DCIndexHint {
+    // TODO: Use Bloom Filter instead of this naive method
+    // uint64 max_key_len = 1;
+    // uint64 min_key_len = 2;
+
+    // bytes max_key = 3;
+    // bytes min_key = 4;
+    repeated uint64 data = 1;
+}
+
+
+// This is the joint view, not pushed directly to DC.
+message DCRecord {
+    DCIndexHint hint = 1;
+    DCRecordIndex index = 2;
+
+    repeated KVPair data = 4;
+    DCMerkleTree mtree = 5;
+}
+
+
+message DCMeta {
+    DCIndexHint hint = 1;
+    DCRecordIndex index = 2;
+    bytes data_pdu_hash = 4;
+    DCMerkleTree mtree = 5;
+}
+
+message DCData {
+    repeated KVPair data = 4;
+}
