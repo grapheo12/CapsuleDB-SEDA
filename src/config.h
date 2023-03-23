@@ -25,24 +25,6 @@ struct Config {
     std::string tc_addr;
 };
 
-class ConfigMap {
-    private:
-        static ConfigMap *__c;
-        Config *c;
-
-        ConfigMap();
-        ~ConfigMap();
-
-    public:
-        ConfigMap(const ConfigMap &) = delete;
-        void operator=(const ConfigMap &) = delete;
-
-        static void ReadFromFile(const char *path);
-        static void LoadConfig(Config *c);
-        static Config *GetConfig();
-        static void DestroyConfig();
-};
-
 /** Config.ini File Format
  * 
  * [keys]

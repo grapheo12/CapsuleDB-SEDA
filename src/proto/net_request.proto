@@ -1,0 +1,9 @@
+syntax = "proto3";
+package net_request;
+
+message NetRequest {
+    bytes replyaddr = 1;
+    uint32 replyport = 2;
+    uint64 sz = 3;
+    bytes body = 4;
+}
