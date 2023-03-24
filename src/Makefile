@@ -10,7 +10,7 @@ all: headers build
 
 build:
 	mkdir -p build
-	# $(MAKE) -C enclave
+	$(MAKE) -C enclave
 	$(MAKE) -C host
 	$(MAKE) -C client
 headers:

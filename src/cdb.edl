@@ -13,82 +13,92 @@ enclave {
 
     
     trusted {
-        public void enclave_ecall_init(uint64_t sema_ptr);
-        public bool enclave_load_kvs();
-        public KV_Status enclave_read(
-            [in, size=key_size] char *key,
-            size_t key_size,
-            [out, size=val_size] char *val,
-            size_t val_size,
-            [out] size_t *val_used,
-            uint64_t rec_ptr
-        ) transition_using_threads;
+        public void enclave_generate_queues(int n);
 
-        public KV_Status enclave_write(
-            [in, size=key_size] char *key,
-            const size_t key_size,
-            [in, size=val_size] char *val,
-            const size_t val_size,
-            uint64_t wec_ptr
-        ) transition_using_threads;
-
-        public void enclave_init_flush(
-            uint64_t buf, // implicit output
-            [out,size=hash_buf_size]char *data_hash,
-            [out,size=hash_buf_size]char *meta_hash, 
-            const size_t hash_buf_size,
-            [out] size_t *data_hash_used,
-            [out] size_t *meta_hash_used,
-            const size_t data_buf_size,
-            const size_t meta_buf_size,
-            [out] size_t *data_buf_used,
-            [out] size_t *meta_buf_used
-        ) transition_using_threads;
-        public bool enclave_end_flush(
-            [in, size=hash_len] const char *hash,
-            const size_t hash_len
-        ) transition_using_threads;
-
-        public void enclave_force_flush(         
-        ) transition_using_threads;
-        public bool enclave_check_empty(   
-        ) transition_using_threads;
-
-        public void enclave_load_ecdsa_key(
-            uint64_t key_buf,
-            size_t buf_size
+        public void enclave_memtable_stage(
+            uint64_t cfg,
+            uint64_t end_signal_ptr,
+            int in_q_idx,
+            int out_q_idx,
+            int dc_q_idx,
+            int flush_q_idx
         );
+        // public void enclave_ecall_init(uint64_t sema_ptr);
+        // public bool enclave_load_kvs();
+        // public KV_Status enclave_read(
+        //     [in, size=key_size] char *key,
+        //     size_t key_size,
+        //     [out, size=val_size] char *val,
+        //     size_t val_size,
+        //     [out] size_t *val_used,
+        //     uint64_t rec_ptr
+        // ) transition_using_threads;
 
-        public void enclave_destroy_ecdsa_key();
+        // public KV_Status enclave_write(
+        //     [in, size=key_size] char *key,
+        //     const size_t key_size,
+        //     [in, size=val_size] char *val,
+        //     const size_t val_size,
+        //     uint64_t wec_ptr
+        // ) transition_using_threads;
 
-        public void enclave_load_aes_key(
-            uint64_t key_buf,
-            size_t key_buf_size,
-            uint64_t iv_buf,
-            size_t iv_buf_size
-        );
+        // public void enclave_init_flush(
+        //     uint64_t buf, // implicit output
+        //     [out,size=hash_buf_size]char *data_hash,
+        //     [out,size=hash_buf_size]char *meta_hash, 
+        //     const size_t hash_buf_size,
+        //     [out] size_t *data_hash_used,
+        //     [out] size_t *meta_hash_used,
+        //     const size_t data_buf_size,
+        //     const size_t meta_buf_size,
+        //     [out] size_t *data_buf_used,
+        //     [out] size_t *meta_buf_used
+        // ) transition_using_threads;
+        // public bool enclave_end_flush(
+        //     [in, size=hash_len] const char *hash,
+        //     const size_t hash_len
+        // ) transition_using_threads;
 
-        public void enclave_destroy_aes_key();
+        // public void enclave_force_flush(         
+        // ) transition_using_threads;
+        // public bool enclave_check_empty(   
+        // ) transition_using_threads;
 
-        public void enclave_load_config(uint64_t config_ptr);
+        // public void enclave_load_ecdsa_key(
+        //     uint64_t key_buf,
+        //     size_t buf_size
+        // );
+
+        // public void enclave_destroy_ecdsa_key();
+
+        // public void enclave_load_aes_key(
+        //     uint64_t key_buf,
+        //     size_t key_buf_size,
+        //     uint64_t iv_buf,
+        //     size_t iv_buf_size
+        // );
+
+        // public void enclave_destroy_aes_key();
+
+        // public void enclave_load_config(uint64_t config_ptr);
     };
 
     untrusted {
-        uint64_t host_read_record(
-            [in, size=hash_len] const char *hash,
-            const size_t hash_len,
-            [out] size_t *record_len,
-        ) transition_using_threads;
+        // uint64_t host_read_record(
+        //     [in, size=hash_len] const char *hash,
+        //     const size_t hash_len,
+        //     [out] size_t *record_len,
+        // ) transition_using_threads;
 
-        uint64_t host_read_fresh_hashes(
-            [out] size_t *record_len
-        ) transition_using_threads;
+        // uint64_t host_read_fresh_hashes(
+        //     [out] size_t *record_len
+        // ) transition_using_threads;
 
-        uint64_t host_cache_write(
-            [in, size=data_len] unsigned char *data,
-            size_t data_len
-        ) transition_using_threads;
+        // uint64_t host_cache_write(
+        //     [in, size=data_len] unsigned char *data,
+        //     size_t data_len
+        // ) transition_using_threads;
 
-        void host_cache_purge(uint64_t ptr) transition_using_threads;
+        // void host_cache_purge(uint64_t ptr) transition_using_threads;
     };
 };

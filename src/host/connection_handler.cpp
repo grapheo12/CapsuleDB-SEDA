@@ -58,9 +58,11 @@ void init_net_rx(Config *cfg, std::atomic<bool>& end_signal, uint16_t port, Requ
         memcpy(replyaddr.replyaddr, req.replyaddr().c_str(), INET_ADDRSTRLEN);
         replyaddr.replyport = (uint16_t)req.replyport();
         addr_map[ctx->uid] = replyaddr;
-        ctx->body = std::string(req.body().c_str(), req.sz());
+        ctx->body = malloc(req.sz() * sizeof(char));
+        memcpy(ctx->body, req.body().c_str(), req.sz());
+        ctx->sz = req.sz();
 
-        std::cout << "ctx->body: " << ctx->body << " " << ctx->body.size() << std::endl;
+        std::cout << "ctx->body: " << (char *)ctx->body << std::endl;
 
         // ctx will be deleted on the consumer side
         rx_q->enqueue(ctx);
@@ -103,9 +105,10 @@ void init_net_tx(Config *cfg, std::atomic<bool>& end_signal, RequestQueue *tx_q)
 
 
         std::cout << "Sent bytes: " << 
-        sendto(sockfd, ctx->body.c_str(), ctx->body.size(), MSG_CONFIRM,
+        sendto(sockfd, (char *)ctx->body, ctx->sz, MSG_CONFIRM,
             (sockaddr *)&sa, sizeof(sa)) << std::endl;
 
+        delete ctx->body;
         delete ctx;
         addr_map.erase(ctx->uid);
     }
