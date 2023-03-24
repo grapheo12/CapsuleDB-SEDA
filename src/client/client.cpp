@@ -174,10 +174,27 @@ int main(int argc, char *argv[])
     auto tx_thread = std::thread(init_net_tx, &cfg, std::ref(end_signal), &cq, remote_addr, remote_port, my_addr, my_port);
 
     while (true){
-        std::string s;
-        std::getline(std::cin, s);
+        std::string cmd, op0, op1;
+        std::cin >> cmd;
+        std::cin >> op0;
+        if (cmd == "WRITE"){
+            std::cin >> op1;
+        }
+
         ClientRequest cr;
-        cr.body = s;
+        NetCommand cmd_;
+
+        if (cmd == "READ"){
+            cmd_.set_type(0);
+            cmd_.add_ops(op0);
+        }else if (cmd == "WRITE"){
+            cmd_.set_type(1);
+            cmd_.add_ops(op0);
+            cmd_.add_ops(op1);
+        }
+
+
+        cr.body = cmd_.SerializeAsString();
         cr.callback = [](std::string msg){
             std::cout << "Response: " << msg << std::endl;
         };

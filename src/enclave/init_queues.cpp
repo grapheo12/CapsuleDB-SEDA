@@ -1,5 +1,5 @@
 #include "cdb_t.h"
-#include "queue_generator.h"
+#include "../util/queue_generator.h"
 #include <vector>
 
 std::vector<RequestQueue *> *global_enclave_queues;

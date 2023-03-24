@@ -4,7 +4,8 @@
 #include <vector>
 #include <string>
 #include <arpa/inet.h>
-#include "blockingconcurrentqueue.h"
+#include "atomic_queue/atomic_queue.h"
+#include <climits>
 
 
 struct RequestContext
@@ -14,7 +15,8 @@ struct RequestContext
     size_t sz;
 };
 
-typedef moodycamel::BlockingConcurrentQueue<RequestContext *> RequestQueue;
+using Element = RequestContext *;
+using RequestQueue = atomic_queue::AtomicQueueB2<Element, std::allocator<Element>, true, false, true>;
 
 
 std::vector<RequestQueue *> *

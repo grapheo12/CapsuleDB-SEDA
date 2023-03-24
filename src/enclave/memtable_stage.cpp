@@ -1,7 +1,7 @@
 #include "cdb_t.h"
 #include "kvs.h"
 #include "../config.h"
-#include "queue_generator.h"
+#include "../util/queue_generator.h"
 #include "stage_comm_types.h"
 #include <atomic>
 
@@ -23,8 +23,7 @@ void enclave_memtable_stage(
     KVStore kvs(cfg->memtable_size);
 
     while (!end_signal.load()){
-        RequestContext *ctx;
-        in_q->wait_dequeue(ctx);
+        RequestContext *ctx = in_q->pop();
 
         Cmd *cmd = (Cmd *)ctx->body;
         CmdResult *res = new CmdResult;
@@ -48,7 +47,7 @@ void enclave_memtable_stage(
 
         free(ctx->body);
         ctx->body = res;
-        out_q->enqueue(ctx);
+        out_q->push(ctx);
     }
 
 

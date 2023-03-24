@@ -10,11 +10,10 @@ static std::atomic<bool> end_signal;
 void short_circuit(Config *cfg, std::atomic<bool>& end_signal, RequestQueue *in_q, RequestQueue *out_q)
 {
     while (!end_signal.load()){
-        RequestContext *ctx;
-        in_q->wait_dequeue(ctx);
+        RequestContext *ctx = in_q->pop();
         std::cout << "Replying to " << ctx->uid << " " << ctx->body << std::endl;
         // Short Circuit
-        out_q->enqueue(ctx);
+        out_q->push(ctx);
     }
 }
 

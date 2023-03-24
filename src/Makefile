@@ -9,7 +9,6 @@ export OE_CRYPTO_LIB
 all: headers build
 
 build:
-	mkdir -p build
 	$(MAKE) -C enclave
 	$(MAKE) -C host
 	$(MAKE) -C client

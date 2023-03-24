@@ -22,7 +22,7 @@ ifeq ($(LVI_MITIGATION), ControlFlow)
     CRYPTO_LDFLAGS := $(shell pkg-config oeenclave-$(COMPILER) --variable=${OE_CRYPTO_LIB}libslvicfg)
 endif
 
-CXXFLAGS=--std=c++17 $(shell pkg-config oeenclave-$(CXX_COMPILER) --cflags) -O2 #-DDEBUG -g
+CXXFLAGS=--std=c++17 -msse2 -DOPENENCLAVE_ARCH=1 $(shell pkg-config oeenclave-$(CXX_COMPILER) --cflags) -O2 #-DDEBUG -g
 CFLAGS=$(shell pkg-config oeenclave-$(COMPILER) --cflags) -O2 #-DDEBUG -g 
 
 LDFLAGS=$(shell pkg-config oeenclave-$(CXX_COMPILER) --libs)
@@ -52,22 +52,25 @@ build: $(HEADERS) *.cpp *.h ../../build
 	$(PROTOC) -I$(PROTO_DIR) --cpp_out=. $(PROTO_DIR)/request.proto
 	$(PROTOC) -I$(PROTO_DIR) --cpp_out=. $(PROTO_DIR)/dc_record.proto
 	$(PROTOC) -I$(PROTO_DIR) --cpp_out=. $(PROTO_DIR)/wal.proto
+	$(PROTOC) -I$(PROTO_DIR) --cpp_out=. $(PROTO_DIR)/net_request.proto
 	# $(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOE_API_VERSION=2 cache.cpp -o $(BLD_SUBDIR)/cache.o
 	# $(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOE_API_VERSION=2 crypto.cpp -o $(BLD_SUBDIR)/crypto.o
 	# $(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOE_API_VERSION=2 local.cpp -o $(BLD_SUBDIR)/local.o
 	# $(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOE_API_VERSION=2 dc.cpp -o $(BLD_SUBDIR)/dc.o
 	# $(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOE_API_VERSION=2 ecall.cpp -o $(BLD_SUBDIR)/ecall.o	
 	$(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOE_API_VERSION=2 memtable_stage.cpp -o $(BLD_SUBDIR)/memtable_stage.o
+	$(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOE_API_VERSION=2 io_stage.cpp -o $(BLD_SUBDIR)/io_stage.o
 	$(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOE_API_VERSION=2 init_queues.cpp -o $(BLD_SUBDIR)/init_queues.o
 	$(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOE_API_VERSION=2 memtable.cpp -o $(BLD_SUBDIR)/memtable.o
 	$(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOE_API_VERSION=2 kvs.cpp -o $(BLD_SUBDIR)/kvs.o
 	# $(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOE_API_VERSION=2 capsule.pb.cc -o $(BLD_SUBDIR)/capsule.pb.o
 	# $(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOE_API_VERSION=2 request.pb.cc -o $(BLD_SUBDIR)/request.pb.o
 	# $(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOE_API_VERSION=2 dc_record.pb.cc -o $(BLD_SUBDIR)/dc_record.pb.o
+	$(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOE_API_VERSION=2 net_request.pb.cc -o $(BLD_SUBDIR)/net_request.pb.o
 	# $(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOE_API_VERSION=2 ../config.cpp -o $(BLD_SUBDIR)/config.o
 	$(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOE_API_VERSION=2 ../util/MurMurHash3.cpp -o $(BLD_SUBDIR)/MurMurHash3.o
 	$(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOE_API_VERSION=2 ../util/bloom_filter.cpp -o $(BLD_SUBDIR)/bloom_filter.o
-	$(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOPENENCLAVE_SEMAPHORE=1 -DOE_API_VERSION=2 queue_generator.cpp -o $(BLD_SUBDIR)/queue_generator.o
+	$(CXX) -g -c $(CXXFLAGS) $(PROTO_INCL)  -DOPENENCLAVE_SEMAPHORE=1 -DOE_API_VERSION=2 ../util/queue_generator.cpp -o $(BLD_SUBDIR)/queue_generator.o
 
 	$(CC) -g -c $(CFLAGS) -DOE_API_VERSION=2 cdb_t.c -o $(BLD_SUBDIR)/cdb_t.o
 	# $(CXX) -o $(BLD_DIR)/cdbenc \
@@ -78,13 +81,13 @@ build: $(HEADERS) *.cpp *.h ../../build
 
 	$(CXX) -o $(BLD_DIR)/cdbenc \
 	$(BLD_SUBDIR)/cdb_t.o \
-	$(BLD_SUBDIR)/init_queues.o $(BLD_SUBDIR)/memtable_stage.o $(BLD_SUBDIR)/queue_generator.o \
+	$(BLD_SUBDIR)/init_queues.o $(BLD_SUBDIR)/memtable_stage.o $(BLD_SUBDIR)/io_stage.o $(BLD_SUBDIR)/queue_generator.o \
 	$(BLD_SUBDIR)/memtable.o $(BLD_SUBDIR)/kvs.o \
-	$(PROTO_LIB) \
-	$(BLD_SUBDIR)/MurMurHash3.o $(BLD_SUBDIR)/bloom_filter.o $(LDFLAGS) $(CRYPTO_LDFLAGS)
+	$(BLD_SUBDIR)/net_request.pb.o \
+	$(BLD_SUBDIR)/MurMurHash3.o $(BLD_SUBDIR)/bloom_filter.o $(PROTO_LIB) $(LDFLAGS) $(CRYPTO_LDFLAGS)
 
 sign:
-	# oesign sign -e $(BLD_DIR)/cdbenc -c cdb.conf -k $(BLD_SUBDIR)/private.pem
+	oesign sign -e $(BLD_DIR)/cdbenc -c cdb.conf -k $(BLD_SUBDIR)/private.pem
 
 clean:
 	rm -f $(BLD_SUBDIR)/* $(HEADERS) *.pb.cc *.pb.h

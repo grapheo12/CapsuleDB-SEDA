@@ -7,8 +7,8 @@ PROTOC=../../third-party/grpc-bin/bin/protoc
 PROTO_LIB=-lprotobuf
 GRPC_LIB=
 
-CXXFLAGS=$(shell pkg-config oehost-$(CXX_COMPILER) --cflags) -O2 #-g
-CFLAGS=$(shell pkg-config oehost-$(COMPILER) --cflags) -O2 #-g
+CXXFLAGS=$(shell pkg-config oehost-$(CXX_COMPILER) --cflags) -O3 -msse2 #-g
+CFLAGS=$(shell pkg-config oehost-$(COMPILER) --cflags) -O3 -msse2 #-g
 
 GRPC_LIB_PATH = $(shell echo "$$(pwd)/../../third-party/grpc-bin")
 OE_LDFLAGS=-L/lib64/ $(shell pkg-config oehost-$(CXX_COMPILER) --libs)
@@ -40,9 +40,10 @@ build: $(HEADERS)
 	# $(CXX) -g -c $(CXXFLAGS) $(GRPC_INCDIR) ocall.cpp -o $(BLD_SUBDIR)/ocall.o
 	# $(CXX) -g -c $(CXXFLAGS) $(GRPC_INCDIR) flush_worker.cpp -o $(BLD_SUBDIR)/flush_worker.o
 	# $(CXX) -g -c $(CXXFLAGS) $(GRPC_INCDIR) rw_worker.cpp -o $(BLD_SUBDIR)/rw_worker.o
-	$(CXX) -g -c $(CXXFLAGS) $(GRPC_INCDIR) host.cpp -o $(BLD_SUBDIR)/host.o
-	$(CXX) -g -c $(CXXFLAGS) $(GRPC_INCDIR) connection_handler.cpp -o $(BLD_SUBDIR)/connection_handler.o
-	$(CXX) -g -c $(CXXFLAGS) $(GRPC_INCDIR) ../util/queue_generator.cpp -o $(BLD_SUBDIR)/queue_generator.o
+	$(CXX) -c $(CXXFLAGS) $(GRPC_INCDIR) host.cpp -o $(BLD_SUBDIR)/host.o
+	$(CXX) -c $(CXXFLAGS) $(GRPC_INCDIR) connection_handler.cpp -o $(BLD_SUBDIR)/connection_handler.o
+	$(CXX) -c $(CXXFLAGS) $(GRPC_INCDIR) ../util/queue_generator.cpp -o $(BLD_SUBDIR)/queue_generator.o
+	# $(CXX) -s $(CXXFLAGS) $(GRPC_INCDIR) ../util/queue_generator.cpp -o $(BLD_SUBDIR)/queue_generator.S
 	# $(CC) -g -c $(CFLAGS)  cdb_u.c -o $(BLD_SUBDIR)/cdb_u.o
 	# $(CXX) -g -c $(CXXFLAGS) $(GRPC_INCDIR) capsule.pb.cc -o $(BLD_SUBDIR)/capsule.pb.o
 	# $(CXX) -g -c $(CXXFLAGS) $(GRPC_INCDIR) request.pb.cc -o $(BLD_SUBDIR)/request.pb.o
@@ -52,7 +53,7 @@ build: $(HEADERS)
 	# $(CXX) -g -c $(CXXFLAGS) $(GRPC_INCDIR) ../config.cpp -o $(BLD_SUBDIR)/config.o
 	# $(CXX) -g -c $(CXXFLAGS) $(GRPC_INCDIR) towncrier/network.pb.cc -o $(BLD_SUBDIR)/network.pb.o
 	# $(CXX) -g -c $(CXXFLAGS) $(GRPC_INCDIR) towncrier/network.grpc.pb.cc -o $(BLD_SUBDIR)/network.grpc.pb.o
-	$(CXX) -g -c $(CXXFLAGS) $(GRPC_INCDIR) net_request.pb.cc -o $(BLD_SUBDIR)/net_request.pb.o
+	$(CXX) -c $(CXXFLAGS) $(GRPC_INCDIR) net_request.pb.cc -o $(BLD_SUBDIR)/net_request.pb.o
 
 
 	# $(CXX) -o $(BLD_DIR)/cdbhost \

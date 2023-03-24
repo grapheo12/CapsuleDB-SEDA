@@ -65,7 +65,7 @@ void init_net_rx(Config *cfg, std::atomic<bool>& end_signal, uint16_t port, Requ
         std::cout << "ctx->body: " << (char *)ctx->body << std::endl;
 
         // ctx will be deleted on the consumer side
-        rx_q->enqueue(ctx);
+        rx_q->push(ctx);
     }
 
     std::cout << "init_net_rx: Ending" << std::endl;
@@ -87,8 +87,7 @@ void init_net_tx(Config *cfg, std::atomic<bool>& end_signal, RequestQueue *tx_q)
     }
 
     while (!end_signal.load()){
-        RequestContext *ctx;
-        tx_q->wait_dequeue(ctx);
+        RequestContext *ctx = tx_q->pop();
 
         auto it = addr_map.find(ctx->uid);
         if (it == addr_map.end()){
@@ -108,7 +107,7 @@ void init_net_tx(Config *cfg, std::atomic<bool>& end_signal, RequestQueue *tx_q)
         sendto(sockfd, (char *)ctx->body, ctx->sz, MSG_CONFIRM,
             (sockaddr *)&sa, sizeof(sa)) << std::endl;
 
-        delete ctx->body;
+        free(ctx->body);
         delete ctx;
         addr_map.erase(ctx->uid);
     }

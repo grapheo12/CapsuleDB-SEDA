@@ -15,6 +15,20 @@ enclave {
     trusted {
         public void enclave_generate_queues(int n);
 
+        public void enclave_input_stage(
+            uint64_t cfg,
+            uint64_t end_signal_ptr,
+            uint64_t in_q_,
+            int out_q_idx
+        );
+
+        public void enclave_output_stage(
+            uint64_t cfg,
+            uint64_t end_signal_ptr,
+            int in_q_idx,
+            uint64_t out_q
+        );
+
         public void enclave_memtable_stage(
             uint64_t cfg,
             uint64_t end_signal_ptr,
