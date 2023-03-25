@@ -22,6 +22,8 @@ void enclave_memtable_stage(
 
     KVStore kvs(cfg->memtable_size);
 
+    fprintf(stderr, "Starting memtable...\n");
+
     while (!end_signal.load()){
         RequestContext *ctx = in_q->pop();
 
@@ -35,7 +37,7 @@ void enclave_memtable_stage(
             res->result = val;
             res->status = status;
         }else if (cmd->type == CMD_WRITE){
-            KV_Status status = kvs.Get(cmd->ops[0], cmd->ops[1]);
+            KV_Status status = kvs.Put(cmd->ops[0], cmd->ops[1]);
             CmdResult *res = new CmdResult;
             res->status = status;
         }else{

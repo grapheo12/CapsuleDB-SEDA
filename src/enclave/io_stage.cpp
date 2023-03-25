@@ -21,15 +21,20 @@ void enclave_input_stage(
     RequestQueue *in_q = (RequestQueue *)in_q_;
     RequestQueue *out_q = (RequestQueue *)global_enclave_queues->at(out_q_idx);
 
+    fprintf(stderr, "Starting input...\n");
+
     while (!end_signal.load()){
         // @todo: Crypto operations here
         RequestContext *ctx = in_q->pop();
 
-        char *data = (char *)ctx->body;
+        char *data = (char *)ctx->original_body;
         NetCommand nc;
-        nc.ParseFromString(std::string(data, ctx->sz));
-        free(ctx->body);
-
+        if (!nc.ParseFromString(std::string(data, ctx->sz))){
+            free((char *)ctx->body);
+            continue;
+        }
+        // host_gc((char *)ctx->original_body);
+        
         Cmd *cmd = new Cmd;
         if (nc.type() == 0 && nc.ops().size() >= 1){
             cmd->type = CMD_READ;
@@ -57,6 +62,8 @@ void enclave_output_stage(
     RequestQueue *in_q = (RequestQueue *)global_enclave_queues->at(in_q_idx);
     RequestQueue *out_q = (RequestQueue *)out_q_;
 
+    fprintf(stderr, "Starting output...\n");
+
     while (!end_signal.load()){
         // @todo: Crypto operations here
         CmdResult *cr;
@@ -74,8 +81,9 @@ void enclave_output_stage(
         }
 
         free(cr);
-        ctx->body = new char[resp_str.size()];
-        memcpy(ctx->body, resp_str.c_str(), resp_str.size());
+        // ctx->body = new char[resp_str.size()];
+        memcpy(ctx->original_body, resp_str.c_str(), resp_str.size());
+        ctx->sz = resp_str.size();
 
         out_q->push(ctx);
     }

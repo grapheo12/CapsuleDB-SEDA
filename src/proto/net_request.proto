@@ -6,6 +6,7 @@ message NetRequest {
     uint32 replyport = 2;
     uint64 sz = 3;
     bytes body = 4;
+    uint64 client_seqno = 5;
 }
 
 message NetCommand {

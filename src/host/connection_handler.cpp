@@ -1,6 +1,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <string>
+#include <sstream>
 #include <stdlib.h>
 #include <cstring>
 #include <unistd.h>
@@ -9,6 +10,8 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <openenclave/host.h>
+#include "cdb_u.h"
 #include "connection_handler.h"
 #include "net_request.pb.h"
 
@@ -49,20 +52,22 @@ void init_net_rx(Config *cfg, std::atomic<bool>& end_signal, uint16_t port, Requ
         NetRequest req;
         req.ParseFromString(std::string(msg_buff, n));
 
-        std::cout << "Received: " << req.body() << " Size: " << req.sz() << std::endl;
-
         RequestContext *ctx = new RequestContext;
         ctx->uid = uid_cnt.fetch_add(1, std::memory_order_seq_cst);            // Sequentially consistent
+        ctx->client_seqno = req.client_seqno();
 
         __replyAddr replyaddr;
         memcpy(replyaddr.replyaddr, req.replyaddr().c_str(), INET_ADDRSTRLEN);
         replyaddr.replyport = (uint16_t)req.replyport();
         addr_map[ctx->uid] = replyaddr;
-        ctx->body = malloc(req.sz() * sizeof(char));
-        memcpy(ctx->body, req.body().c_str(), req.sz());
-        ctx->sz = req.sz();
 
-        std::cout << "ctx->body: " << (char *)ctx->body << std::endl;
+        size_t __sz = req.sz();
+        if (__sz < cfg->key_maxsize + cfg->val_maxsize + 10){
+            __sz = cfg->key_maxsize + cfg->val_maxsize + 10;
+        }
+        ctx->original_body = (char *)malloc(__sz * sizeof(char));
+        memcpy(ctx->original_body, req.body().c_str(), req.sz());
+        ctx->sz = req.sz();
 
         // ctx will be deleted on the consumer side
         rx_q->push(ctx);
@@ -76,7 +81,7 @@ void init_net_rx(Config *cfg, std::atomic<bool>& end_signal, uint16_t port, Requ
 
 }
 
-void init_net_tx(Config *cfg, std::atomic<bool>& end_signal, RequestQueue *tx_q)
+void init_net_tx(oe_enclave_t *enclave, Config *cfg, std::atomic<bool>& end_signal, RequestQueue *tx_q)
 {
     std::cout << "init_net_tx: Starting transmission" << std::endl;
 
@@ -97,17 +102,20 @@ void init_net_tx(Config *cfg, std::atomic<bool>& end_signal, RequestQueue *tx_q)
 
         sockaddr_in sa;
         memset(&sa, 0, sizeof(sa));
-        std::cout << "Replying to: " << it->second.replyaddr << ":" << it->second.replyport << std::endl;
         inet_pton(AF_INET, it->second.replyaddr, &(sa.sin_addr));
         sa.sin_port = htons(it->second.replyport);
         sa.sin_family = AF_INET;
 
+        std::stringstream ss;
+        ss << ctx->client_seqno << "|" << std::string((char *)ctx->original_body, ctx->sz);
+        std::string sbody = ss.str();
 
-        std::cout << "Sent bytes: " << 
-        sendto(sockfd, (char *)ctx->body, ctx->sz, MSG_CONFIRM,
-            (sockaddr *)&sa, sizeof(sa)) << std::endl;
+        sendto(sockfd, sbody.c_str(), sbody.size(), MSG_CONFIRM,
+            (sockaddr *)&sa, sizeof(sa));
 
-        free(ctx->body);
+
+        // enclave_gc(enclave, ctx->body);
+        free(ctx->original_body);
         delete ctx;
         addr_map.erase(ctx->uid);
     }

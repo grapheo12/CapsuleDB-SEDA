@@ -11,8 +11,10 @@
 struct RequestContext
 {
     uint64_t uid;
+    char *original_body;
     void *body;
     size_t sz;
+    uint64_t client_seqno;
 };
 
 using Element = RequestContext *;

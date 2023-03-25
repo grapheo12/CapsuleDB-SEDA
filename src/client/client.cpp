@@ -119,9 +119,8 @@ void init_net_tx(Config *cfg, std::atomic<bool>& end_signal, ClientRequestQueue 
         sa.sin_family = AF_INET;
 
         NetRequest nr;
-        std::stringstream ss;
-        ss << uid << "|" << req.body;
-        nr.set_body(ss.str());
+        nr.set_body(req.body);
+        nr.set_client_seqno(uid);
         nr.set_sz(req.body.size());
         nr.set_replyaddr(std::string(my_addr, INET_ADDRSTRLEN));
         nr.set_replyport((uint32_t)my_port);

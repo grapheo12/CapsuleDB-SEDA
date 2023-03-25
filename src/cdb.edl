@@ -37,6 +37,9 @@ enclave {
             int dc_q_idx,
             int flush_q_idx
         );
+
+        public void enclave_gc(void *ptr) transition_using_threads;
+
         // public void enclave_ecall_init(uint64_t sema_ptr);
         // public bool enclave_load_kvs();
         // public KV_Status enclave_read(
@@ -98,6 +101,8 @@ enclave {
     };
 
     untrusted {
+        void host_gc(void *ptr) transition_using_threads;
+
         // uint64_t host_read_record(
         //     [in, size=hash_len] const char *hash,
         //     const size_t hash_len,

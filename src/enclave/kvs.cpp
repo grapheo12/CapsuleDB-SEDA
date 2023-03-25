@@ -62,7 +62,7 @@ KV_Status KVStore::Put(const std::string &key, const std::string &value) {
         }
     }
 
-    curr_host_wec->e_put_in_mt++;
+    // curr_host_wec->e_put_in_mt++;
 	auto ret = mt_[cur_mt_]->Put(key, value);
     if (ret == JUST_FULL) {
         *flush_sema = true;
