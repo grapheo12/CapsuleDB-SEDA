@@ -16,8 +16,7 @@
 #include "net_request.pb.h"
 
 using namespace net_request;
-static std::atomic<uint64_t> uid_cnt;
-static std::unordered_map<uint64_t, __replyAddr> addr_map;
+
 
 void init_net_rx(Config *cfg, std::atomic<bool>& end_signal, uint16_t port, RequestQueue *rx_q)
 {
@@ -39,7 +38,6 @@ void init_net_rx(Config *cfg, std::atomic<bool>& end_signal, uint16_t port, Requ
     }
 
     std::cout << "init_net_rx: Starting listening for request on port: " << port << std::endl;
-    uid_cnt.store(0);
 
     size_t max_sz = cfg->key_maxsize + cfg->val_maxsize + 100;
     char *msg_buff = new char[max_sz];
@@ -48,18 +46,16 @@ void init_net_rx(Config *cfg, std::atomic<bool>& end_signal, uint16_t port, Requ
 
     while (!end_signal.load()){
         ssize_t n = recvfrom(sockfd, msg_buff, max_sz, MSG_WAITALL, (sockaddr *)&cliaddr, &cliaddr_len);
-        std::cout << "Recvd msg: " << msg_buff << " Size: " << n << std::endl;
         NetRequest req;
-        req.ParseFromString(std::string(msg_buff, n));
+        if (!req.ParseFromString(std::string(msg_buff, n))){
+            continue;
+        }
 
         RequestContext *ctx = new RequestContext;
-        ctx->uid = uid_cnt.fetch_add(1, std::memory_order_seq_cst);            // Sequentially consistent
         ctx->client_seqno = req.client_seqno();
 
-        __replyAddr replyaddr;
-        memcpy(replyaddr.replyaddr, req.replyaddr().c_str(), INET_ADDRSTRLEN);
-        replyaddr.replyport = (uint16_t)req.replyport();
-        addr_map[ctx->uid] = replyaddr;
+        memcpy(ctx->reply_addr, req.replyaddr().c_str(), INET_ADDRSTRLEN);
+        ctx->reply_port = (uint16_t)req.replyport();
 
         size_t __sz = req.sz();
         if (__sz < cfg->key_maxsize + cfg->val_maxsize + 10){
@@ -93,17 +89,10 @@ void init_net_tx(oe_enclave_t *enclave, Config *cfg, std::atomic<bool>& end_sign
 
     while (!end_signal.load()){
         RequestContext *ctx = tx_q->pop();
-
-        auto it = addr_map.find(ctx->uid);
-        if (it == addr_map.end()){
-            std::cerr << "init_net_tx: Invalid UID" << std::endl;
-            continue;
-        }
-
         sockaddr_in sa;
         memset(&sa, 0, sizeof(sa));
-        inet_pton(AF_INET, it->second.replyaddr, &(sa.sin_addr));
-        sa.sin_port = htons(it->second.replyport);
+        inet_pton(AF_INET, ctx->reply_addr, &(sa.sin_addr));
+        sa.sin_port = htons(ctx->reply_port);
         sa.sin_family = AF_INET;
 
         std::stringstream ss;
@@ -117,7 +106,6 @@ void init_net_tx(oe_enclave_t *enclave, Config *cfg, std::atomic<bool>& end_sign
         // enclave_gc(enclave, ctx->body);
         free(ctx->original_body);
         delete ctx;
-        addr_map.erase(ctx->uid);
     }
 
     std::cout << "init_net_tx: Ending" << std::endl;

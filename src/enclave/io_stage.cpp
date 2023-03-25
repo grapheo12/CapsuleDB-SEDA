@@ -69,6 +69,7 @@ void enclave_output_stage(
         CmdResult *cr;
         RequestContext *ctx = in_q->pop();
         cr = (CmdResult *)ctx->body;
+
         std::string resp_str;
         if (cr->status == READ_FAIL){
             resp_str = "READ_FAIL";

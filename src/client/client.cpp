@@ -70,7 +70,6 @@ void init_net_rx(Config *cfg, std::atomic<bool>& end_signal, uint16_t port)
 
     while (!end_signal.load()){
         ssize_t n = recvfrom(sockfd, msg_buff, max_sz, MSG_WAITALL, (sockaddr *)&cliaddr, &cliaddr_len);
-        std::cout << "Message recv: " << n << std::endl;
         reply_to_caller(msg_buff, n);
     }
 
@@ -127,8 +126,8 @@ void init_net_tx(Config *cfg, std::atomic<bool>& end_signal, ClientRequestQueue 
 
         std::string serial = nr.SerializeAsString();
 
-        std::cout << "Sent bytes: " << sendto(sockfd, serial.c_str(), serial.size(), MSG_CONFIRM,
-            (sockaddr *)&sa, sizeof(sa)) << std::endl;
+        sendto(sockfd, serial.c_str(), serial.size(), MSG_CONFIRM,
+            (sockaddr *)&sa, sizeof(sa));
 
     }
 
@@ -172,7 +171,7 @@ int main(int argc, char *argv[])
     auto rx_thread = std::thread(init_net_rx, &cfg, std::ref(end_signal), (uint16_t)my_port);
     auto tx_thread = std::thread(init_net_tx, &cfg, std::ref(end_signal), &cq, remote_addr, remote_port, my_addr, my_port);
 
-    while (true){
+    while (!std::cin.eof()){
         std::string cmd, op0, op1;
         std::cin >> cmd;
         std::cin >> op0;
@@ -190,6 +189,8 @@ int main(int argc, char *argv[])
             cmd_.set_type(1);
             cmd_.add_ops(op0);
             cmd_.add_ops(op1);
+        }else{
+            continue;
         }
 
 

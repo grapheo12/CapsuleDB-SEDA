@@ -10,7 +10,8 @@
 
 struct RequestContext
 {
-    uint64_t uid;
+    char reply_addr[INET_ADDRSTRLEN];
+    uint16_t reply_port;
     char *original_body;
     void *body;
     size_t sz;

@@ -35,10 +35,8 @@ KVStore::~KVStore()
     }
 }
 
-KV_Status KVStore::Put(const std::string &key, const std::string &value) {
-    //std::cerr << "KVStore::Put" << std::endl;
-	// Host code manages synchronization.
-
+KV_Status KVStore::Put(const std::string &key, const std::string &value)
+{
     if (!mt_[cur_mt_]->IsMutable()) {
         // This memtable is full, let's switch to one that has some space.
         

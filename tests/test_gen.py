@@ -5,10 +5,10 @@ import numpy as np
 import string
 
 key_size=16
-max_val_len=1000
+max_val_len=10
 dist = "zipf"
 zipf_const = 2
-warmup = True
+warmup = False
 try:
     wr_ratio = float(argv[1])
     unique_keys = int(argv[2])

@@ -109,6 +109,7 @@ int main(int argc, const char *argv[])
     end_signal.store(false);
     cfg.key_maxsize = 100;
     cfg.val_maxsize = 1000;
+    cfg.memtable_size = 1100000;
 
     std::cerr << "Creating Enclave" << std::endl;
     result = oe_create_cdb_enclave(
@@ -137,6 +138,8 @@ int main(int argc, const char *argv[])
     rx_thread.join();
     tx_thread.join();
     input_thread.join();
+    output_thread.join();
+    memtable_thread.join();
 
 exit:
     // Clean up the enclave if we created one

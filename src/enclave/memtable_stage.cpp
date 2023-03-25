@@ -38,7 +38,6 @@ void enclave_memtable_stage(
             res->status = status;
         }else if (cmd->type == CMD_WRITE){
             KV_Status status = kvs.Put(cmd->ops[0], cmd->ops[1]);
-            CmdResult *res = new CmdResult;
             res->status = status;
         }else{
             delete res;
@@ -49,6 +48,7 @@ void enclave_memtable_stage(
 
         free(ctx->body);
         ctx->body = res;
+
         out_q->push(ctx);
     }
 
